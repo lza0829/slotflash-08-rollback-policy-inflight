@@ -68,6 +68,7 @@ export default function Orders() {
               <th>目标槽</th>
               <th>固件</th>
               <th>状态</th>
+              <th>单内回退档</th>
               <th></th>
             </tr>
           </thead>
@@ -79,6 +80,10 @@ export default function Orders() {
                 <td>{r.target_slot}</td>
                 <td>{r.firmware_version}</td>
                 <td>{r.status}</td>
+                <td className="mono">
+                  {r.policy_mode || "—"} / {r.policy_hold_sec ?? "—"}s @v{r.policy_version}
+                  {r.policy_frozen_at ? "（冻结）" : ""}
+                </td>
                 <td>
                   {r.status === "写闪中" && (
                     <button className="btn" onClick={() => api.closeOrder(r.id).then(load)}>

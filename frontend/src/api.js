@@ -21,6 +21,8 @@ export const api = {
     j(`/api/启动链/${boardId}/探针色`, { method: "POST", body: JSON.stringify(body) }),
   policy: () => j("/api/回退拨"),
   setPolicy: (body) => j("/api/回退拨", { method: "POST", body: JSON.stringify(body) }),
+  policyFlips: () => j("/api/回退拨/流水"),
+  policyFollow: () => j("/api/回退拨/跟随"),
   align: () => j("/api/校验"),
   settings: () => j("/api/板规"),
   events: () => j("/api/事件"),

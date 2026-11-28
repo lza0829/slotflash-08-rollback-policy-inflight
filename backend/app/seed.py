@@ -52,7 +52,7 @@ def seed_if_empty() -> None:
         (2, None, "黄", 1, ts),
     )
     conn.execute(
-        "INSERT INTO rollback_policy(id, mode, hold_sec) VALUES (1,?,?)",
+        "INSERT INTO rollback_policy(id, mode, hold_sec, version) VALUES (1,?,?,0)",
         ("失败硬退", 20),
     )
     conn.execute(

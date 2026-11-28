@@ -21,10 +21,17 @@ function bootLamp(color) {
   );
 }
 
+function followTag(state) {
+  const cls =
+    state === "在途·跟现档" ? "cyan" : state === "在途·未同现档" ? "coral" : state === "已收口·冻结节" ? "mono" : "muted";
+  return <span className={cls}>{state}</span>;
+}
+
 export default function Align() {
   const [data, setData] = useState(null);
+  const load = () => api.align().then(setData);
   useEffect(() => {
-    api.align().then(setData);
+    load();
   }, []);
   if (!data) return <p className="muted">加载中…</p>;
 
@@ -32,15 +39,112 @@ export default function Align() {
   const boots = data.启动链投影 || [];
   const orders = data.写闪近单 || [];
   const policy = data.回退拨 || {};
+  const follow = data.跟随格 || [];
+  const flips = data.拧档流水 || [];
 
   return (
     <div className="stack">
       <section className="panel">
         <h1>校验屏</h1>
-        <p className="muted">把闪槽角色、启动链色、近单状态拉到同一屏对读。</p>
-        <p className="mono">
-          回退拨：{policy.mode || "—"} / {policy.hold_sec ?? "—"}s
+        <p className="muted">把闪槽角色、启动链色、近单状态、回退拨跟随拉到同一屏对读。</p>
+        <div className="row">
+          <span className="muted mono">现档</span>
+          <strong className="cyan mono">
+            {policy.mode || "—"} / {policy.hold_sec ?? "—"}s
+          </strong>
+          <span className="muted mono">v{policy.version ?? "—"}</span>
+        </div>
+      </section>
+
+      <section className="panel">
+        <h2>回退拨跟随格</h2>
+        <p className="muted">
+          在途单跟现档（须有跟随痕）；已收口单跟冻结节（只读）。两臂分列，不得混站。
         </p>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>单</th>
+              <th>板卡/槽</th>
+              <th>状态</th>
+              <th>单内回退档</th>
+              <th>跟随态</th>
+              <th>冻结戳</th>
+              <th>跟随痕</th>
+            </tr>
+          </thead>
+          <tbody>
+            {follow.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="muted">
+                  暂无单据
+                </td>
+              </tr>
+            ) : (
+              follow.map((r) => (
+                <tr key={r.id}>
+                  <td>#{r.id}</td>
+                  <td>
+                    {r.board_name}/{r.target_slot}
+                  </td>
+                  <td>{r.status}</td>
+                  <td className="mono">
+                    {r.policy_mode || "—"} / {r.policy_hold_sec ?? "—"}s @v{r.policy_version}
+                  </td>
+                  <td>{followTag(r.跟随态)}</td>
+                  <td className="mono">{r.policy_frozen_at || "—"}</td>
+                  <td className="mono">
+                    {r.跟随痕.length === 0
+                      ? "—"
+                      : r.跟随痕.map((t) => `${t.from_mode}→${t.to_mode}/${t.outcome}`).join("；")}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </section>
+
+      <section className="panel">
+        <h2>拧档流水</h2>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>时</th>
+              <th>档位</th>
+              <th>版本</th>
+              <th>随单</th>
+              <th>跟随痕</th>
+            </tr>
+          </thead>
+          <tbody>
+            {flips.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="muted">
+                  尚未拧档
+                </td>
+              </tr>
+            ) : (
+              flips.map((f) => (
+                <tr key={f.id}>
+                  <td>{f.id}</td>
+                  <td className="mono">{f.at}</td>
+                  <td className="mono">
+                    {f.from_mode}→{f.to_mode}
+                  </td>
+                  <td className="mono">
+                    v{f.version_before}→v{f.version_after}
+                  </td>
+                  <td>{f.affected_orders}</td>
+                  <td className="mono">
+                    {f.跟随.length === 0 ? "—" : f.跟随.map((t) => `#${t.order_id}${t.outcome}`).join("，")}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </section>
 
       <section className="panel">
@@ -102,12 +206,13 @@ export default function Align() {
               <th>板卡</th>
               <th>目标槽</th>
               <th>状态</th>
+              <th>单内回退档</th>
             </tr>
           </thead>
           <tbody>
             {orders.length === 0 ? (
               <tr>
-                <td colSpan={4} className="muted">
+                <td colSpan={5} className="muted">
                   暂无近单
                 </td>
               </tr>
@@ -118,6 +223,9 @@ export default function Align() {
                   <td>#{r.board_id}</td>
                   <td>{r.target_slot}</td>
                   <td>{r.status}</td>
+                  <td className="mono">
+                    {r.policy_mode || "—"} @v{r.policy_version}
+                  </td>
                 </tr>
               ))
             )}
